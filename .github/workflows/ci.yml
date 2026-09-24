@@ -54,11 +54,35 @@ jobs:
         with:
           node-version: '20'
 
+      # Caches npm's download store, not node_modules. The key changes with the
+      # lock file, so a dependency change always builds a fresh entry.
+      - name: Cache the npm download cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Run the unit tests
-        run: npm run test:unit
+      # Static analysis runs before the tests: it is cheap, and a style failure
+      # should not wait for the database to start.
+      - name: Lint the sources
+        run: npm run lint
 
-      - name: Run the integration tests
-        run: npm run test:integration
+      - name: Run the test suite with a JUnit report
+        env:
+          JEST_JUNIT_OUTPUT_DIR: ./reports
+        run: npm test -- --reporters=default --reporters=jest-junit
+
+      # always() keeps this step running after a failed test step, which is the
+      # only way the report of a red run ever reaches the run summary.
+      - name: Upload the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: reports/
+          retention-days: 7
