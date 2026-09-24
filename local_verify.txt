@@ -1,0 +1,36 @@
+Baseline local - 24/09/2026
+
+$ docker compose ps
+NAME                                             SERVICE   STATUS
+holbertonschool-hbtn-devops-pipeline-lab-app-1   app       Up   0.0.0.0:3000->3000/tcp
+holbertonschool-hbtn-devops-pipeline-lab-db-1    db        Up (healthy)
+
+$ docker compose run --rm app npm run test:unit
+
+> hbtn-devops-pipeline-lab@1.0.0 test:unit
+> jest --runInBand tests/unit
+
+PASS tests/unit/items.unit.test.js
+PASS tests/unit/health.test.js
+
+Test Suites: 2 passed, 2 total
+Tests:       8 passed, 8 total
+Snapshots:   0 total
+Time:        0.32 s
+
+$ docker compose run --rm app npm run test:integration
+
+> hbtn-devops-pipeline-lab@1.0.0 test:integration
+> jest --runInBand tests/integration
+
+PASS tests/integration/items.int.test.js
+
+Test Suites: 1 passed, 1 total
+Tests:       3 passed, 3 total
+Snapshots:   0 total
+Time:        0.348 s
+
+$ curl -s http://localhost:3000/health
+{"status":"ok"}
+
+$ docker compose down -v
